@@ -1,13 +1,14 @@
 #include <SFML/Graphics.hpp>
-#include<iostream>
+#include <iostream>
 #include <vector>
-
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
 const int WINDOW_SIZE_X = 800, WINDOW_SIZE_Y = 800;
 const int CELLS_X = 100, CELLS_Y = 100;
-const int DRAW_SIZE_X = (WINDOW_SIZE_X / 1) / CELLS_X;
-const int DRAW_SIZE_Y = (WINDOW_SIZE_Y / 1) / CELLS_Y;
+const int DRAW_SIZE_X = (WINDOW_SIZE_X / 1.3) / CELLS_X;
+const int DRAW_SIZE_Y = (WINDOW_SIZE_Y / 1.3) / CELLS_Y;
 
                          //l, r, u, d
 struct cell_neighbours { int ind[4]; };
@@ -36,28 +37,51 @@ vector<cell_neighbours> generate_graph()
     return out;
 }
 
+void randomize(vector<pair<int, int>> &p)
+{
+    for(int i = 0;i < 10;i++)
+    {
+        int f_i = rand() % p.size();
+        int s_i = rand() % p.size();
+        
+        auto tmp = p[f_i];
+        p[f_i] = p[s_i];
+        p[s_i] = tmp;
+    }
+}
+
+
 void dfs(int curr, bool *vis,const vector<cell_neighbours> &p, cell_neighbours *out)
 {
-    vis[curr] = 1;
-
+    vis[curr] = true;
+    
+    vector<pair<int, int>> options;    
+    
     for(int i = 0;i < 4;i++)
     {
         int next = p[curr].ind[i];
-        if(next != -1 && !vis[next])
-        { 
-            out[curr].ind[i] = next;
-            
-            int index;
-            if(i == 0) index = 1;
-            if(i == 1) index = 0;
-            if(i == 2) index = 3;
-            if(i == 3) index = 2;
-        
-            out[next].ind[index] = curr;
+        options.push_back({i, next});
+    }   
 
-            dfs(next, vis, p, out);
+    randomize(options);
+
+    for(auto next : options)
+    {       
+        if(next.second != -1 && !vis[next.second])
+        {
+            int index;
+            if(next.first == 0) index = 1;
+            if(next.first == 1) index = 0;
+            if(next.first == 2) index = 3;
+            if(next.first == 3) index = 2;
+        
+            out[curr].ind[next.first] = next.second;
+            out[next.second].ind[index] = curr;     
+            
+            dfs(next.second, vis, p, out); 
         }
     }
+
 
     return;
 }
@@ -108,7 +132,6 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
                     curr.setSize(sf::Vector2f(1, DRAW_SIZE_Y));
                     curr.setPosition(x1, y1);
                     out.push_back(curr);
-                    cout << "a" << endl;
                 }
                 
                 if(j == 1)
@@ -117,7 +140,6 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
                     curr.setSize(sf::Vector2f(1, DRAW_SIZE_Y));
                     curr.setPosition(x2, y1);
                     out.push_back(curr);
-                    cout << "b" << endl;
                 }
                 
                 if(j == 2)
@@ -126,7 +148,6 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
                     curr.setSize(sf::Vector2f(DRAW_SIZE_X, 1));
                     curr.setPosition(x1, y1);
                     out.push_back(curr);
-                    cout << "c" << endl;
                 }
                 
                 if(j == 3)
@@ -135,7 +156,6 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
                     curr.setSize(sf::Vector2f(DRAW_SIZE_X, 1));
                     curr.setPosition(x1, y2);
                     out.push_back(curr);
-                    cout << "d" << endl;
                 }
             }
         }
@@ -152,29 +172,13 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
 
 int main()
 {
+    srand(static_cast<unsigned int> (time(nullptr)));
+
     sf::RenderWindow window(sf::VideoMode(WINDOW_SIZE_Y, WINDOW_SIZE_X), "SFML works!");
     
     vector<cell_neighbours> g = generate_graph();
     
-    for(int i = 0;i < CELLS_X * CELLS_Y;i++)
-    {
-        cout << "i: " << i << endl;
-        for(int j = 0;j < 4;j++)
-            cout << g[i].ind[j] << " ";
-        cout << endl;
-    }
-
-    cout << "=============================" << endl;
-
     cell_neighbours *maze = vis_graph(g);
-    for(int i = 0;i < CELLS_X * CELLS_Y;i++)
-    {
-        cout <<  "i: " << i << endl;
-        for(int j = 0;j < 4;j++)
-            cout << maze[i].ind[j] << " ";
-        cout << endl;
-    }
-
     
     vector<sf::RectangleShape> lines = draw_maze(maze);
 
