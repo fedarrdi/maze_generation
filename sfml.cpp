@@ -6,9 +6,9 @@
 using namespace std;
 
 const int WINDOW_SIZE_X = 800, WINDOW_SIZE_Y = 800;
-const int CELLS_X = 100, CELLS_Y = 100;
-const int DRAW_SIZE_X = (WINDOW_SIZE_X / 1.3) / CELLS_X;
-const int DRAW_SIZE_Y = (WINDOW_SIZE_Y / 1.3) / CELLS_Y;
+const int CELLS_X = 20, CELLS_Y = 20;
+const int DRAW_SIZE_X = (WINDOW_SIZE_X / 1.1) / CELLS_X;
+const int DRAW_SIZE_Y = (WINDOW_SIZE_Y / 1.1) / CELLS_Y;
 
                          //l, r, u, d
 struct cell_neighbours { int ind[4]; };
@@ -102,7 +102,6 @@ cell_neighbours *vis_graph(const vector<cell_neighbours> &p)
     return out;
 }
 
-
 vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
 {
     int index = 0, x1 = 0, y1 = 0, y2 = DRAW_SIZE_Y, x2 = DRAW_SIZE_X;
@@ -170,6 +169,47 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
     return out;
 }
 
+void form_cycles_in_maze(cell_neighbours *out)
+{
+    int cycle_count = 5;
+
+    for(int i = 0;i < cycle_count;i++)
+    {
+        int curr_node = rand() % (CELLS_X * CELLS_Y);
+        int direction = rand() % 4;
+        int neighbour_node = -1;
+        
+        if(direction == 0 && curr_node % CELLS_X)    
+            neighbour_node = curr_node - 1;
+    
+        if(direction == 1 && (curr_node + 1) % CELLS_X)
+            neighbour_node = curr_node + 1;
+    
+        if(direction == 2 && curr_node - CELLS_X > 0)
+            neighbour_node = curr_node - CELLS_X;
+
+        if(direction == 3 && curr_node + CELLS_X < CELLS_X * CELLS_Y)
+            neighbour_node = curr_node + CELLS_X;
+        
+        if(neighbour_node != -1)
+        {
+            out[curr_node].ind[direction] = neighbour_node;
+            
+            int index;
+            if(direction == 0) index = 1;
+            if(direction == 1) index = 0;
+            if(direction == 2) index = 3;
+            if(direction == 3) index = 2;
+            out[neighbour_node].ind[index] = curr_node;
+        }
+        else
+        {
+            cout << "else" << endl;
+            i--;
+        }
+    }
+
+}
 int main()
 {
     srand(static_cast<unsigned int> (time(nullptr)));
@@ -180,6 +220,8 @@ int main()
     
     cell_neighbours *maze = vis_graph(g);
     
+    form_cycles_in_maze(maze);
+
     vector<sf::RectangleShape> lines = draw_maze(maze);
 
     while (window.isOpen())
