@@ -5,8 +5,8 @@
 #include <ctime>
 using namespace std;
 
-const int WINDOW_SIZE_X = 800, WINDOW_SIZE_Y = 800;
-const int CELLS_X = 20, CELLS_Y = 20;
+const int WINDOW_SIZE_X = 1000, WINDOW_SIZE_Y = 1000;
+const int CELLS_X = 40, CELLS_Y = 40;
 const int DRAW_SIZE_X = (WINDOW_SIZE_X / 1.1) / CELLS_X;
 const int DRAW_SIZE_Y = (WINDOW_SIZE_Y / 1.1) / CELLS_Y;
 
@@ -171,7 +171,7 @@ vector<sf::RectangleShape> draw_maze(cell_neighbours * maze)
 
 void form_cycles_in_maze(cell_neighbours *out)
 {
-    int cycle_count = 5;
+    int cycle_count = CELLS_X * CELLS_Y / 10;
 
     for(int i = 0;i < cycle_count;i++)
     {
@@ -242,3 +242,4 @@ int main()
 
     return 0;
 }
+
