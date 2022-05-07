@@ -6,7 +6,7 @@
 using namespace std;
 
 const int WINDOW_SIZE_X = 1000, WINDOW_SIZE_Y = 1000;
-const int CELLS_X = 40, CELLS_Y = 40;
+const int CELLS_X = 100, CELLS_Y = 100;
 const int DRAW_SIZE_X = (WINDOW_SIZE_X / 1.1) / CELLS_X;
 const int DRAW_SIZE_Y = (WINDOW_SIZE_Y / 1.1) / CELLS_Y;
 
@@ -91,7 +91,7 @@ cell_neighbours *vis_graph(const vector<cell_neighbours> &p)
     bool vis[CELLS_Y * CELLS_Y];
     for(int i = 0;i < CELLS_X * CELLS_Y;vis[i++] = 0);
 
-    cell_neighbours *out =  new cell_neighbours[CELLS_X * CELLS_Y];
+    cell_neighbours *out = new cell_neighbours[CELLS_X * CELLS_Y];
 
     for(int i = 0;i < CELLS_X * CELLS_Y;i++)
         for(int j = 0;j < 4;j++)
@@ -203,13 +203,73 @@ void form_cycles_in_maze(cell_neighbours *out)
             out[neighbour_node].ind[index] = curr_node;
         }
         else
-        {
-            cout << "else" << endl;
             i--;
-        }
     }
-
 }
+
+void generate_room(cell_neighbours *out, int start_node, int depth)
+{
+    if(!depth) return;
+    out[start_node].ind[0] = start_node - 1;
+    out[start_node - 1].ind[1] = start_node;
+    out[start_node].ind[1] = start_node + 1;
+    out[start_node + 1].ind[0] = start_node;
+    out[start_node].ind[2] = start_node - CELLS_X;
+    out[start_node - CELLS_X].ind[3] = start_node;
+    out[start_node].ind[3] = start_node + CELLS_X;
+    out[start_node + CELLS_X].ind[2] = start_node;   
+
+    int f_d = rand() % 4, s_d, t = rand() % 2;
+    int f_node, s_node;
+    
+    if(f_d == 0 || f_d == 1)
+        s_d = t ? 2 : 3;
+
+    else if(f_d == 2 || f_d == 3)
+        s_d = t ? 0 : 1;
+    
+    if(f_d == 0) f_node = start_node - 1;
+    
+    if(f_d == 1) f_node = start_node + 1;
+
+    if(f_d == 2) f_node = start_node - CELLS_X;
+
+    if(f_d == 3) f_node = start_node + CELLS_X;
+
+    if(s_d == 0) s_node = start_node - 1;
+    
+    if(s_d == 1) s_node = start_node + 1;
+
+    if(s_d == 2) s_node = start_node - CELLS_X;
+
+    if(s_d == 3) s_node = start_node + CELLS_X;
+
+    generate_room(out, f_node, depth - 1);
+    generate_room(out, s_node, depth - 1);
+}
+
+void make_rooms(cell_neighbours *out)
+{
+    int room_size = 6;
+    int rooms_count = 10;
+    
+    for(int i = 0;i < rooms_count;i++)
+    {
+        int room_start_node = rand() % (CELLS_X * CELLS_Y);
+        
+        int y = room_start_node / CELLS_X;
+        int x = room_start_node - CELLS_X * y;
+        
+
+        if((y - room_size >= 0 && y + room_size < CELLS_X * CELLS_Y) && (x - room_size >= 0 && x + room_size < CELLS_X))
+           generate_room(out, room_start_node, room_size);
+        else
+            i--;
+    }
+    
+}
+
+
 int main()
 {
     srand(static_cast<unsigned int> (time(nullptr)));
@@ -221,6 +281,8 @@ int main()
     cell_neighbours *maze = vis_graph(g);
     
     form_cycles_in_maze(maze);
+
+    make_rooms(maze);
 
     vector<sf::RectangleShape> lines = draw_maze(maze);
 
@@ -242,4 +304,3 @@ int main()
 
     return 0;
 }
-
