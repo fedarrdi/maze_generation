@@ -250,8 +250,8 @@ void generate_room(cell_neighbours *out, int start_node, int depth)
 
 void make_rooms(cell_neighbours *out)
 {
-    int room_size = 6;
-    int rooms_count = 10;
+    int room_size = 4;
+    int rooms_count = 5;
     
     for(int i = 0;i < rooms_count;i++)
     {
@@ -267,6 +267,72 @@ void make_rooms(cell_neighbours *out)
             i--;
     }
     
+}
+
+vector<sf::RectangleShape> draw_path(vector<int> path)
+{
+
+    vector<sf::RectangleShape> out;
+    cout << path.size() << endl;
+
+    for(int curr_node : path)
+    {
+      
+        int x = 0, y = 0, tmp = curr_node;
+
+        while(tmp - CELLS_X >= 0)
+        {
+            y++;
+            tmp -= CELLS_X;
+        }
+        y++; 
+        x = tmp;
+        
+        sf::RectangleShape curr_sq;
+        curr_sq.setFillColor(sf::Color(100, 250, 50));
+        curr_sq.setSize(sf::Vector2f(DRAW_SIZE_X / 2, DRAW_SIZE_Y / 2));
+        curr_sq.setPosition(x*DRAW_SIZE_X, y*DRAW_SIZE_Y);
+        
+        out.push_back(curr_sq);
+    }   
+
+    return out;
+}
+
+void dijickstra(int curr, int *dist, const cell_neighbours *g, int *parent_of_node)
+{
+    for(int i = 0;i < 4;i++)
+    {
+        int next = g[curr].ind[i], curr_dist = dist[curr] + 1;
+        
+        if(next != -1 && dist[next] > curr_dist)
+        {
+            dist[next] = curr_dist;
+            parent_of_node[next] = curr;
+            dijickstra(next, dist, g, parent_of_node);
+        }   
+    }        
+}
+
+void print_path(int index, const int *parent, vector<int> &path)
+{   
+    if(index == -1)
+        return;
+    
+    print_path(parent[index], parent, path);
+    path.push_back(index);
+    cout << index << endl;
+}
+
+vector<int> find_path_from_to(const cell_neighbours *g)
+{
+    int start_node = 0, end_node = CELLS_X * CELLS_Y - 1,  dist[CELLS_X * CELLS_Y], parent_of_node[CELLS_X * CELLS_Y];
+    vector<int> path;    
+    for(int i = 0;i < CELLS_X * CELLS_Y;parent_of_node[i] = -1, dist[i++] = 1e5);
+    dist[start_node] = 0;
+    dijickstra(start_node, dist, g, parent_of_node);
+    print_path(end_node, parent_of_node, path);
+    return path;
 }
 
 
@@ -285,7 +351,9 @@ int main()
     make_rooms(maze);
 
     vector<sf::RectangleShape> lines = draw_maze(maze);
-
+    
+    vector<int> path = find_path_from_to(maze);
+    vector<sf::RectangleShape> path_cords =draw_path(path);
     while (window.isOpen())
     {
         sf::Event event;
@@ -297,8 +365,13 @@ int main()
          
        
         window.clear();
+        
         for(int i = 0;i < lines.size();i++)
             window.draw(lines[i]);
+
+        for(int i = 0;i < path_cords.size();i++)
+            window.draw(path_cords[i]);
+            
         window.display();
     }
 
