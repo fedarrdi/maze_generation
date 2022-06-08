@@ -2,7 +2,8 @@
 #include <math.h>
 #include <iostream>
 #include <vector>
-
+#include <ctime>
+#include <cstdlib>
 
 using namespace std;
 
@@ -45,11 +46,48 @@ vector<Point> generate_bezier_curve(Point a, Point b, Point c, double t_step)
     return bezier_curve;
 }
 
+Point generate_random_point(Point s, double min_dist)
+{
+    double d = 0;
+    Point e;
+    
+    while(d < min_dist)
+    {
+        e.x = rand() % WIDTH;
+        e.y = rand() % HEIGHT;
+        d = dist(s, e);
+    }
+
+    return e;
+}
+
+
+Point generate_bizier_curve_point(Point s, Point e, double min_dist)
+{
+    double d1, d2;
+    Point b;
+    do
+    {
+        b.x = rand() % WIDTH;
+        b.y = rand() % HEIGHT;
+        d1 = dist(s, b);
+        d2 = dist(e, b);
+    } while(d1 < min_dist || d2 < min_dist);
+
+
+    return b;
+}   
+
+
+
+
 int main()
 {
+    srand(static_cast<unsigned int> (time(nullptr)));
+
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "SFML works!");
         
-    Point player = {500, 700}, b = {100, 300}, c = {500, 100}, delta;
+    Point player = {780, 780}, c = {760, 10}, b = generate_bizier_curve_point(player, c, 100), delta;
 
     sf::CircleShape s1(5);
     s1.setPosition(player.x, player.y);
@@ -58,15 +96,13 @@ int main()
     sf::CircleShape s3(5);
     s3.setPosition(c.x, c.y);
 
-    sf::Vertex l1[] ={sf::Vertex(sf::Vector2f(player.x, player.y)),sf::Vertex(sf::Vector2f(b.x, b.y))};
-    sf::Vertex l2[] ={sf::Vertex(sf::Vector2f(b.x, b.y)),sf::Vertex(sf::Vector2f(c.x, c.y))};
 
     vector<Point> bezier_curve = generate_bezier_curve(player, b, c, 0.01);
     int last_bizier_point_index = 0;
         
     sf::CircleShape p(5);
     p.setPosition(player.x, player.y);
-
+    
     while (window.isOpen())
     {
         sf::Event event;
@@ -78,12 +114,6 @@ int main()
 
         window.clear();
 
-        window.draw(s1);
-        window.draw(s2);
-        window.draw(s3);
-        window.draw(l1, 2, sf::Lines);
-        window.draw(l2, 2, sf::Lines);
-    
         for(auto c_p_b : bezier_curve)
         {
             sf::CircleShape s_b(2);
@@ -100,12 +130,42 @@ int main()
         player.x += delta.x;
         player.y += delta.y;
         p.setPosition(player.x, player.y);
-        cout << player.x <<  " "  << player.y << endl;
+
+
+        if(last_bizier_point_index == bezier_curve.size())
+        {
+            bezier_curve.clear();
+            c = generate_random_point(player, 300);
+            b = generate_bizier_curve_point(player, c, 100);
+            last_bizier_point_index = 0;
+            bezier_curve = generate_bezier_curve(player, b, c, 0.01);
+            s1.setPosition(player.x, player.y);
+            s2.setPosition(b.x, b.y);
+            s3.setPosition(c.x, c.y);
+
+        }
+        window.draw(s1);
+        window.draw(s2);
+        window.draw(s3);
+        
+        sf::Vertex l1[] =
+        {
+            sf::Vertex(sf::Vector2f(player.x, player.y)),
+            sf::Vertex(sf::Vector2f(b.x, b.y))
+        };
+        
+        sf::Vertex l2[] =
+        {
+            sf::Vertex(sf::Vector2f(b.x, b.y)),
+            sf::Vertex(sf::Vector2f(c.x, c.y))
+        };
         
         window.draw(p);
-
+        window.draw(l1, 2, sf::Lines); 
+        window.draw(l2, 2, sf::Lines); 
+        
         window.display();
     }
-
+    
     return 0;
 }
