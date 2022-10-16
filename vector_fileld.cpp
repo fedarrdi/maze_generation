@@ -261,6 +261,8 @@ int main()
 
     vector<sf::RectangleShape> f = field.generate(); 
     
+    int last_index = -1;
+
     while (window.isOpen())
     {
         sf::Event event;
@@ -276,7 +278,16 @@ int main()
         
         int index = field.get_collision_index(particle.get_position());
         f[index].setFillColor(sf::Color::Blue);
-       
+    
+        if(-1 == last_index)
+            last_index = index;
+
+        if(last_index != index)
+        {
+            f[last_index].setFillColor(sf::Color::White);
+            last_index = index;
+        }
+
         for(auto curr : f)
             window.draw(curr);
 
