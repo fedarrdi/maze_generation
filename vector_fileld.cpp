@@ -167,8 +167,9 @@ public:
     sf::RectangleShape get_draw_obj()
     {
         sf::RectangleShape rectangle;
-        rectangle.setSize(sf::Vector2f(3, 3));
+        rectangle.setSize(sf::Vector2f(5, 5));
         rectangle.setPosition(position.get_x(), position.get_y());
+        rectangle.setFillColor(sf::Color::Red);
         return rectangle;
     }
 
@@ -232,6 +233,14 @@ public:
 
         return out;
     }
+    
+    int get_collision_index(Point particle_position)
+    {
+        int x_index = particle_position.get_x() / cell_width - 0.5;
+        int y_index = particle_position.get_y() / cell_height - 0.5;
+        
+        return y_index * field_width + x_index;
+    }
 
 };
 
@@ -251,8 +260,7 @@ int main()
     Particle particle(a, v);
 
     vector<sf::RectangleShape> f = field.generate(); 
-   
-
+    
     while (window.isOpen())
     {
         sf::Event event;
@@ -261,10 +269,19 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
         }
+
         particle.move(); 
         
         window.clear();
+        
+        int index = field.get_collision_index(particle.get_position());
+        f[index].setFillColor(sf::Color::Blue);
+       
+        for(auto curr : f)
+            window.draw(curr);
+
         window.draw(particle.get_draw_obj());
+        
         window.display();
     }
 
