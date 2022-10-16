@@ -180,6 +180,7 @@ public:
         cout << "Direction ";
         direction.print();
     }
+
 };
 
 class Vector_field
@@ -209,12 +210,14 @@ public:
         for(int y = 0;y < field_height;y++)
             for(int x = 0;x < field_width;x++)
             {
+                int x_  = x*x - 9*x, y_ = y*y - 9*y;
+
                 field_directions[y][x].set_s(Point(0, 0));
-                field_directions[y][x].set_e(Point(1,1));
+                field_directions[y][x].set_e(Point(x_, y_));
             }
     }
 
-    vector<sf::RectangleShape> generate()
+    vector<sf::RectangleShape> generate_grid()
     {
         vector<sf::RectangleShape> out;
         sf::RectangleShape rectangle;
@@ -233,6 +236,23 @@ public:
 
         return out;
     }
+
+    vector<sf::Vertex> generate_vectors()
+    {
+        vector<sf::Vertex> out;
+        
+        for(int i = 0;i < field_height;i++)
+        {
+            for(int j = 0;j < field_width;j++)
+            {
+                Point offset = field_directions[i][j].get_e();///need to scale down vectos
+                out.push_back(sf::Vertex(sf::Vector2f((j + 0.5) * cell_width, (i + 0.5) * cell_height), sf::Color::Red));
+                out.push_back(sf::Vertex(sf::Vector2f((j + 0.5) * cell_width + offset.get_x(), (i + 0.5) * cell_height + offset.get_y()), sf::Color::Red));               
+            }
+        }
+
+        return out;
+    }
     
     int get_collision_index(Point particle_position)
     {
@@ -242,6 +262,19 @@ public:
         return y_index * field_width + x_index;
     }
 
+    void print_vector_field()
+    {
+        int index = 0;
+        for(int i = 0;i < field_height;i++)
+        {
+            for(int j = 0;j < field_width;j++)
+            {
+                cout << index++ << endl;
+                field_directions[i][j].print();
+                cout << endl;
+           }    
+        }
+    }
 };
 
 
@@ -258,9 +291,12 @@ int main()
 
     Vector_field field(30, 30, WIDTH / 30, HEIGHT / 30);
     Particle particle(a, v);
-
-    vector<sf::RectangleShape> f = field.generate(); 
     
+    field.fill_vector_field();
+    
+    vector<sf::RectangleShape> f = field.generate_grid(); 
+    vector<sf::Vertex> vs = field.generate_vectors();
+
     int last_index = -1;
 
     while (window.isOpen())
@@ -272,7 +308,7 @@ int main()
                 window.close();
         }
 
-        particle.move(); 
+        //particle.move(); 
         
         window.clear();
         
@@ -291,7 +327,18 @@ int main()
         for(auto curr : f)
             window.draw(curr);
 
-        window.draw(particle.get_draw_obj());
+        for(int i = 0;i < vs.size(); i+= 2)
+        {
+            sf::Vertex line[2] =
+            {
+                vs[i],
+                vs[i + 1]
+            };
+
+            window.draw(line, 2, sf::Lines);
+        }
+
+        //window.draw(particle.get_draw_obj());
         
         window.display();
     }
